@@ -1,0 +1,12 @@
+{
+    "name": "eddiejibson/limitrr-php",
+    "description": "SlimPHP rate limiting using redis.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Edward Jibson",
+            "email": "jibson@tuta.io"
+        }
+    ],
+    "require": {}
+}
