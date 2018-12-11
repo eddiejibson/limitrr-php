@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 11th 2018, 11:24:39 am
+ * @Last Modified Time: December 11th 2018, 1:34:37 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -48,9 +48,24 @@ class limitrr {
     //incomplete idek
     public function limit(array $arr) {
         return function($req, $res, $next) {
+            $route = (isset($arr["route"]) ? $arr["route"] : "default");
+            if ($request->hasHeader("CF-Connecting-IP")) {
+                $ip = $request->getHeader("CF-Connecting-IP");
+            } elseif ($request->hasHeader("X-Forwarded-For")) {
+                $ip = $request->getHeader("X-Forwarded-For");
+            } elseif ($arr["route"] == "test") { //For unit testing
+                $ip = "test";
+            }
+            $keyName = $this->options->keyName;
             $route = $arr["route"];
-        }
+            $result = $redis->multi()
+            ->get("limitrr:${keyName}:${ip}:${route}:requests")
+            ->get("limitrr:${keyName}:${ip}:${route}:completed")
+            ->ttl("limitrr:${keyName}:${ip}:${route}:requests")
+            ->ttl("limitrr:${keyName}:${ip}:${route}:completed")
+            ->exec();
+        };
     }
 
-    public function 
+
 }
