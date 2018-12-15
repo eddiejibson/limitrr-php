@@ -12,7 +12,7 @@
 
 Light rate limting within PHP using Redis.
 </div>
-Limitrr PHP is very heavily inspired by my other library, Limitrr which was created for NodeJS. Check it out [here](https://github.com/eddiejibson/chae-limitrr/).
+Limitrr PHP is very heavily inspired by my other library, Limitrr which was created for NodeJS. Check it out [here](https://github.com/eddiejibson/chae-limitrr).
 
 Limitrr PHP allows users to easily integrate rate limiting within their application. Unlike other similar packages, this utility allows the user to limit not only by the number of requests but also the number of completed actions (e.g allowing a certain amount of accounts to be successfully created within a timespan) and have such restricted with custom options. As well as this, custom discriminators are possible - you no longer have to limit by just the user's IP.
 
