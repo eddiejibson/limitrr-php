@@ -3,9 +3,10 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 15th 2018, 4:13:24 pm
+ * @Last Modified Time: December 15th 2018, 7:52:44 pm
  * @Last Modified By: Edward Jibson
  */
+namespace eddiejibson;
 
 class limitrr
 {
@@ -44,21 +45,17 @@ class limitrr
     private function connect(array $conf = [])
     {
         try {
-            $this->db = new Redis();
-            $conf["host"] = (isset($conf["host"]) ? $conf["host"] : "127.0.0.1");
-            $conf["port"] = (isset($conf["port"]) ? $conf["port"] : 6379);
-            $res = $this->db->connect($conf["host"], $conf["port"]);
-            if (isset($conf["password"])) {
-                $res = $this->db->auth($conf["password"]);
-            }
-            if ($res) {
-                return true;
+            if (!isset($conf["uri"])) {
+                $conf["host"] = (isset($conf["host"]) ? $conf["host"] : "127.0.0.1");
+                $conf["port"] = (isset($conf["port"]) ? $conf["port"] : 6379);
             } else {
-                $this->db = null;
-                return false;
+                $conf = strval($conf["uri"]);
             }
-        } catch (\Exception $e) {
-            throw new Exception("Limitrr: An error was encountered. ${e}", 1);
+            $this->db = $client = new \Predis\Client($conf);
+            $client->connect();
+        } catch (\Predis\Connection\ConnectionException $e) {
+            $msg = $e->getMessage();
+            throw new \Exception("Limitrr: Could not connect to the Redis keystore. ${msg}", 1);
         }
     }
 
@@ -75,8 +72,12 @@ class limitrr
 
     public function test()
     {
-        $result = $this->db->incr("limitrrrequests");
-        var_dump($result);
+        var_dump($this->db->pipeline()
+                ->set("limitrr:requests")
+                ->get("limitrr:completed")
+                ->ttl("limitrr:requests")
+                ->ttl("limitrr:completed")
+                ->execute());
     }
 
     //incomplete idek
@@ -93,12 +94,12 @@ class limitrr
             }
             $keyName = $this->options->keyName;
             $route = $arr["route"];
-            $result = $this->db->multi()
+            $result = $this->db->pipeline()
                 ->get("limitrr:${keyName}:${ip}:${route}:requests")
                 ->get("limitrr:${keyName}:${ip}:${route}:completed")
                 ->ttl("limitrr:${keyName}:${ip}:${route}:requests")
                 ->ttl("limitrr:${keyName}:${ip}:${route}:completed")
-                ->exec();
+                ->execute();
             if ($result) {
                 if (!$result[0]) {
                     $result[0] = -2;
@@ -106,10 +107,10 @@ class limitrr
                 if (!$result[1]) {
                     $result[1] = -2;
                 }
-                if (0 > $result[2]) {
+                if (0 > $result[2] || !$result[2]) {
                     $result[2] = 0;
                 }
-                if (0 > $result[3]) {
+                if (0 > $result[3] || !$result[3]) {
                     $result[3] = 0;
                 }
                 if ($result[0] >= $this->routes[$route]["requestsPerExpiry"]) {
@@ -129,13 +130,14 @@ class limitrr
                     }
                 } else {
                     try {
-                        $result = $this->db->multi()
+                        $result = $this->db->pipeline()
                             ->incr("limitrr:${keyName}:${ip}:${route}:requests")
                             ->expire("limitrr:${keyName}:${ip}:${route}:requests", $this->routes[$route]["requestsPerExpiry"])
-                            ->exec();
+                            ->execute();
                         return $next($request, $response);
                     } catch (\Exception $e) {
-                        throw new Exception("Limitrr: An error was encountered. ${e}", 1);
+                        $msg = $e->getMessage();
+                        throw new \Exception("Limitrr: An error was encountered. ${e}", 1);
                     }
                 }
             }
@@ -144,10 +146,10 @@ class limitrr
 
     public function complete(array $arr)
     {
-        $route = $arr["route"] = (isset($arr["route"]) ? $arr["route"] : "default");
-        $discriminator = $arr["discriminator"];
         $keyName = $this->options->keyName;
-        $result = $this->db-> ->incr("limitrr:${keyName}:${ip}:${route}:completed");
+        $discriminator = $arr["discriminator"];
+        $route = $arr["route"] = (isset($arr["route"]) ? $arr["route"] : "default");
+        $result = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:completed");
     }
 
     private function setDefaultToUndefined(array $routes, array $default)
@@ -166,4 +168,3 @@ class limitrr
     }
 
 }
-include_once "test.php";

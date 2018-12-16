@@ -1,2 +1,4 @@
 /vendor/
 /src/test.php
+/src/autoload-test.php
+test.php

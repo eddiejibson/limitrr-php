@@ -2,11 +2,17 @@
     "name": "eddiejibson/limitrr-php",
     "description": "SlimPHP rate limiting using redis.",
     "type": "library",
-    "authors": [
-        {
-            "name": "Edward Jibson",
-            "email": "jibson@tuta.io"
+    "authors": [{
+        "name": "Edward Jibson",
+        "email": "jibson@tuta.io"
+    }],
+    "autoload": {
+        "psr-4": {
+            "eddiejibson\\": "src/"
         }
-    ],
-    "require": {}
+    },
+    "require": {
+        "predis/predis": "^1.1"
+    },
+    "license": "GPL-3.0-only"
 }
