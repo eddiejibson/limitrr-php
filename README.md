@@ -25,7 +25,7 @@ If you appreciate this project, please 🌟 it on GitHub.
 
 ## Installation
 
-Then, after you have installed the Redis driver, you can install the limitrr-php libary via executing the following commandline in your terminal:
+You can install the limitrr-php libary via executing the following commandline in your terminal:
 
 ```bash
 composer require eddiejibson/limitrr-php

@@ -3,15 +3,21 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 15th 2018, 7:52:44 pm
+ * @Last Modified Time: December 19th 2018, 5:13:43 pm
  * @Last Modified By: Edward Jibson
  */
-namespace eddiejibson;
+namespace eddiejibson\limitrr;
 
-class limitrr
+// use Psr\Http\Message\RequestInterface;
+// use Psr\Http\Message\ResponseInterface;
+
+class Limitrr
 {
     public function __construct(array $conf = [])
     {
+        if (!isset($conf["redis"])) {
+            $conf["redis"] = [];
+        }
         if (isset($conf["options"]["mw"]) && $conf["options"]["mw"]) {
             $this->options = [
                 "keyName" => (isset($conf["options"]["keyName"]) ? $conf["options"]["keyName"] : "limitrr"),
@@ -59,96 +65,73 @@ class limitrr
         }
     }
 
-    public function getIp($request, $response, $next)
+    public function limit($opts = [], $req, $res, $next)
     {
-        if ($request->hasHeader("CF-Connecting-IP")) {
-            $ip = $request->getHeader("CF-Connecting-IP");
-        } elseif ($request->hasHeader("X-Forwarded-For")) {
-            $ip = $request->getHeader("X-Forwarded-For");
+        $route = (isset($opts["route"]) ? $opts["route"] : "default");
+        if ($req->hasHeader("CF-Connecting-IP")) {
+            $ip = $req->getHeader("CF-Connecting-IP");
+        } elseif ($req->hasHeader("X-Forwarded-For")) {
+            $ip = $req->getHeader("X-Forwarded-For");
+        } elseif ($route == "test") { //For unit testing
+            $ip = "test";
+        } else {
+            $ip = $req->getServerParam('REMOTE_ADDR');
         }
-        $request = $request->withAttribute("realip", $ip);
-        return $next($request, $response);
-    }
-
-    public function test()
-    {
-        var_dump($this->db->pipeline()
-                ->set("limitrr:requests")
-                ->get("limitrr:completed")
-                ->ttl("limitrr:requests")
-                ->ttl("limitrr:completed")
-                ->execute());
-    }
-
-    //incomplete idek
-    public function limit(array $arr)
-    {
-        return function ($req, $res, $next) {
-            $route = (isset($arr["route"]) ? $arr["route"] : "default");
-            if ($request->hasHeader("CF-Connecting-IP")) {
-                $ip = $request->getHeader("CF-Connecting-IP");
-            } elseif ($request->hasHeader("X-Forwarded-For")) {
-                $ip = $request->getHeader("X-Forwarded-For");
-            } elseif ($arr["route"] == "test") { //For unit testing
-                $ip = "test";
+        $keyName = $this->options["keyName"];
+        $result = $this->db->pipeline()
+            ->get("limitrr:${keyName}:${ip}:${route}:requests")
+            ->get("limitrr:${keyName}:${ip}:${route}:completed")
+            ->ttl("limitrr:${keyName}:${ip}:${route}:requests")
+            ->ttl("limitrr:${keyName}:${ip}:${route}:completed")
+            ->execute();
+        if ($result) {
+            if (!$result[0]) {
+                $result[0] = -2;
             }
-            $keyName = $this->options->keyName;
-            $route = $arr["route"];
-            $result = $this->db->pipeline()
-                ->get("limitrr:${keyName}:${ip}:${route}:requests")
-                ->get("limitrr:${keyName}:${ip}:${route}:completed")
-                ->ttl("limitrr:${keyName}:${ip}:${route}:requests")
-                ->ttl("limitrr:${keyName}:${ip}:${route}:completed")
-                ->execute();
-            if ($result) {
-                if (!$result[0]) {
-                    $result[0] = -2;
+            if (!$result[1]) {
+                $result[1] = -2;
+            }
+            if (0 > $result[2] || !$result[2]) {
+                $result[2] = 0;
+            }
+            if (0 > $result[3] || !$result[3]) {
+                $result[3] = 0;
+            }
+            if ($result[0] >= $this->routes[$route]["requestsPerExpiry"]) {
+                return $res->withJson([
+                    "error" => $this->routes[$route]["errorMsgs"]["requests"],
+                ], $this->options["errorStatusCode"]);
+            } elseif ($result[1] >= $this->routes[$route]["completedActionsPerExpiry"]) {
+                return $res->withJson([
+                    "error" => $this->routes[$route]["errorMsgs"]["completed"],
+                ], $this->options["errorStatusCode"]);
+            } elseif ($result[0] > -2) {
+                try {
+                    $result = $this->db->incr("limitrr:${keyName}:${ip}:${route}:requests");
+                    return $next($req, $res);
+                } catch (\Exception $e) {
+                    throw new Exception("Limitrr: An error was encountered. ${e}", 1);
                 }
-                if (!$result[1]) {
-                    $result[1] = -2;
-                }
-                if (0 > $result[2] || !$result[2]) {
-                    $result[2] = 0;
-                }
-                if (0 > $result[3] || !$result[3]) {
-                    $result[3] = 0;
-                }
-                if ($result[0] >= $this->routes[$route]["requestsPerExpiry"]) {
-                    return $res->withJson([
-                        "error" => $this->routes[$route]["errorMsgs"]["requests"],
-                    ], $this->options["errorStatusCode"]);
-                } elseif ($result[1] >= $this->routes[$route]["completedPerExpiry"]) {
-                    return $res->withJson([
-                        "error" => $this->routes[$route]["errorMsgs"]["completed"],
-                    ], $this->options["errorStatusCode"]);
-                } elseif ($result[0] > -2) {
-                    try {
-                        $result = $this->db->incr("limitrr:${keyName}:${ip}:${route}:requests");
-                        return $next($request, $response);
-                    } catch (\Exception $e) {
-                        throw new Exception("Limitrr: An error was encountered. ${e}", 1);
-                    }
-                } else {
-                    try {
-                        $result = $this->db->pipeline()
-                            ->incr("limitrr:${keyName}:${ip}:${route}:requests")
-                            ->expire("limitrr:${keyName}:${ip}:${route}:requests", $this->routes[$route]["requestsPerExpiry"])
-                            ->execute();
-                        return $next($request, $response);
-                    } catch (\Exception $e) {
-                        $msg = $e->getMessage();
-                        throw new \Exception("Limitrr: An error was encountered. ${e}", 1);
-                    }
+            } else {
+                try {
+                    $result = $this->db->pipeline()
+                        ->incr("limitrr:${keyName}:${ip}:${route}:requests")
+                        ->expire("limitrr:${keyName}:${ip}:${route}:requests", $this->routes[$route]["requestsPerExpiry"])
+                        ->execute();
+                    return $next($req, $res);
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    throw new \Exception("Limitrr: An error was encountered. ${e}", 1);
                 }
             }
-        };
+        }
     }
 
-    public function complete(array $arr)
+    public function complete(array $opts)
     {
         $keyName = $this->options->keyName;
-        $discriminator = $arr["discriminator"];
-        $route = $arr["route"] = (isset($arr["route"]) ? $arr["route"] : "default");
+        $discriminator = $opts["discriminator"];
+        $route = $opts["route"] = (isset($opts["route"]) ? $opts["route"] : "default");
         $result = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:completed");
     }
 
@@ -167,4 +150,35 @@ class limitrr
         return $routes;
     }
 
+}
+
+class RateLimitMiddleware
+{
+    public function __construct(Limitrr $limitrr, array $opts = [])
+    {
+        $this->limitrr = $limitrr;
+        $this->opts = $opts;
+        return true;
+    }
+    // RequestInterface $req, ResponseInterface $res, callable $next
+    public function __invoke($req, $res, $next)
+    {
+        return $this->limitrr->limit($this->opts, $req, $res, $next);
+    }
+}
+
+class GetIpMiddleware
+{
+    public function __invoke($req, $res, $next)
+    {
+        if ($req->hasHeader("CF-Connecting-IP")) {
+            $ip = $req->getHeader("CF-Connecting-IP");
+        } elseif ($req->hasHeader("X-Forwarded-For")) {
+            $ip = $req->getHeader("X-Forwarded-For");
+        } else {
+            $ip = $req->getServerParam('REMOTE_ADDR');
+        }
+        $req = $req->withAttribute("realip", $ip);
+        return $next($req, $res);
+    }
 }
