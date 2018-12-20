@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 19th 2018, 5:13:43 pm
+ * @Last Modified Time: December 20th 2018, 5:11:20 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -110,7 +110,7 @@ class Limitrr
                     $result = $this->db->incr("limitrr:${keyName}:${ip}:${route}:requests");
                     return $next($req, $res);
                 } catch (\Exception $e) {
-                    throw new Exception("Limitrr: An error was encountered. ${e}", 1);
+                    $this->handleError($e);
                 }
             } else {
                 try {
@@ -120,19 +120,65 @@ class Limitrr
                         ->execute();
                     return $next($req, $res);
                 } catch (\Exception $e) {
-                    $msg = $e->getMessage();
-                    throw new \Exception("Limitrr: An error was encountered. ${e}", 1);
+
                 }
             }
         }
+    }
+
+    public function test()
+    {
+        try {
+            $resuelt = $this->db->set("limitrr:test", 1);
+            $resuelt = $this->db->expire("limitrr:test", 100);
+        } catch (\Exception $th) {
+            echo $th;
+        }
+
+        if ($resuelt) {
+            echo "Done!";
+        }
+        var_dump($resuelt);
     }
 
     public function complete(array $opts)
     {
         $keyName = $this->options->keyName;
         $discriminator = $opts["discriminator"];
-        $route = $opts["route"] = (isset($opts["route"]) ? $opts["route"] : "default");
-        $result = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:completed");
+        $route = (isset($opts["route"]) ? $opts["route"] : "default");
+        $currentResult = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:completed");
+        if ($currentResult) {
+            try {
+                $result = $this->db->incr("limitrr:${keyName}:${discriminator}:${route}:completed");
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            if ($result > $currentResult) {
+                return true;
+            } else {
+                throw new \Exception("Limitrr: An error was encountered.", 1);
+            }
+        } else {
+            try {
+                $result = $this->db->pipeline()
+                    ->incr("limitrr:${keyName}:${discriminator}:${route}:completed")
+                    ->expire("limitrr:${keyName}:${discriminator}:${route}:requests", $this->routes[$route]["completedActionsPerExpiry"])
+                    ->execute();
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            if ($result[0] > 0 && $result[1]) {
+                return true;
+            } else {
+                throw new \Exception("Limitrr: An error was encountered.", 1);
+            }
+        }
+    }
+
+    private function handleError(\Exception $e)
+    {
+        $msg = $e->getMessage();
+        throw new \Exception("Limitrr: An error was encountered. ${msg}", 1);
     }
 
     private function setDefaultToUndefined(array $routes, array $default)

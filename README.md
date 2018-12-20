@@ -8,7 +8,7 @@
 <img src="https://www.codefactor.io/repository/github/eddiejibson/limitrr-php/badge">
 <a href="https://paypal.me/eddiejibson/5"><img src="https://img.shields.io/badge/donate-PayPal-brightgreen.svg"></a>
 <!-- <img src="https://requires.io/github/eddiejibson/chae-limitrr/requirements.svg?branch=master"> -->
-<!-- <img src="https://img.shields.io/npm/dw/limitrr.svg"> -->
+<img src="https://img.shields.io/packagist/dt/eddiejibson/limitrr-php.svg">
 
 Light rate limting within PHP using Redis.
 </div>
@@ -31,3 +31,26 @@ You can install the limitrr-php libary via executing the following commandline i
 composer require eddiejibson/limitrr-php
 ```
 
+## Quick Guide
+
+### Basic Usage
+
+```php
+require "/vendor/autoload.php"; //Require composer's autoload
+
+$options = [
+    "routes" => [
+        "default" => [
+            "requestsPerExpiry" => 5,
+        ],
+    ],
+    "redis" => [
+        "host" => "666.chae.sh",
+        "port" => 6379,
+        "password" => "supersecret",
+    ],
+];
+
+$limitrr = new new \eddiejibson\limitrr\Limitrr($options);
+
+```
