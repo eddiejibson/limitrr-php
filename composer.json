@@ -6,6 +6,7 @@
         "name": "Edward Jibson",
         "email": "jibson@tuta.io"
     }],
+    "keywords": ["security", "brute-force", "rate-limit", "middleware", "slim-php", "slimphp", "redis", "security-tools", "rate-limiter", "ratelimit", "brute-force-attacks"],
     "autoload": {
         "psr-4": {
             "eddiejibson\\": "src/"
