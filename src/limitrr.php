@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 21st 2018, 6:15:30 pm
+ * @Last Modified Time: December 21st 2018, 7:05:34 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -207,7 +207,6 @@ class Limitrr
                 return true;
             } else {
                 throw new \Exception("Limitrr: Could not reset values", 1);
-                return false;
             }
         } else {
             try {
@@ -219,7 +218,6 @@ class Limitrr
                 return true;
             } else {
                 throw new \Exception("Limitrr: Could not reset values", 1);
-                return false;
             }
         }
     }
