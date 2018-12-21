@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 21st 2018, 2:26:04 pm
+ * @Last Modified Time: December 21st 2018, 2:55:23 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -263,12 +263,12 @@ class GetIpMiddleware
 {
     public function __invoke($req, $res, $next)
     {
-        if ($req->hasHeader("CF - Connecting - IP ")) {
-            $ip = $req->getHeader("CF - Connecting - IP ");
-        } elseif ($req->hasHeader("X - Forwarded - for ")) {
-            $ip = $req->getHeader("X - Forwarded - for ");
+        if ($req->hasHeader("CF-Connecting-IP")) {
+            $ip = $req->getHeader("CF-Connecting-IP");
+        } elseif ($req->hasHeader("X-Forwarded-for")) {
+            $ip = $req->getHeader("X-Forwarded-for");
         } else {
-            $ip = $req->getServerParam('REMOTE_ADDR');
+            $ip = $req->getServerParam("REMOTE_ADDR");
         }
         $req = $req->withAttribute("realip ", $ip);
         return $next($req, $res);

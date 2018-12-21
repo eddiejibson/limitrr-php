@@ -51,6 +51,32 @@ $options = [
     ],
 ];
 
-$limitrr = new new \eddiejibson\limitrr\Limitrr($options);
+$limitrr = new new \eddiejibson\limitrr\Limitrr($options)
 
+
+//Usage within SlimPHP
+$app = new Slim\App();
+
+//Use the Limitrr SlimPHP middleware function, if you wish:
+$app->add(new \eddiejibson\limitrr\RateLimitMiddleware($limitrr)); //Make sure to pass in the main Limitrr
+//instance we defined above into the middleware function
+
+//You can also add the get IP middleware function, it will append the user's real IP (behind Cloudflare or not)
+//to the request.
+$app->add(new \eddiejibson\limitrr\getIpMiddleware());
+
+//Example usage within a route
+$app->get("/hello/{name}", function ($request, $response, $args) {
+    $name = $args["name"];
+    $ip = $request->getAttribute('realip'); //Get the IP that was defined within Limitrr's get IP middleware function
+    return $response->getBody()->write("Hello, ${name}. Your IP is ${ip}.");
+});
+
+//You do not have to app the middleware function to every single route, globally.
+//You can do it indivually, too - along with passing options into such. Like so:
+$app->get("/createUser/{name}", function ($request, $response, $args) {
+
+})->add(new \eddiejibson\limitrr\RateLimitMiddleware($limitrr, ["route"=>"createUser"]));
+
+$app->run();
 ```
