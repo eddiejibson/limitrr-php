@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 21st 2018, 7:05:34 pm
+ * @Last Modified Time: December 21st 2018, 7:26:05 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -153,7 +153,7 @@ class Limitrr
             } catch (\Exception $e) {
                 $this->handleError($e);
             }
-            if ($result[0] > 0 && $result[1]) {
+            if ($result[0] > 0 && isset($result[1])) {
                 return $result[0];
             } else {
                 throw new \Exception("Limitrr: Could not complete values", 1);
@@ -176,25 +176,26 @@ class Limitrr
                 $this->handleError($e);
             }
             return [
-                "requests" => ($result[0] ? $result[0] : 0),
-                "completed" => ($result[1] ? $result[0] : 0),
+                "requests" => ($result[0] ? intval($result[0]) : 0),
+                "completed" => ($result[1] ? intval($result[1]) : 0),
             ];
         } else {
+            $type = $opts["type"];
             try {
                 $result = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:${type}");
             } catch (\Exception $e) {
                 $this->handleError($e);
             }
-            return ($result ? $result : 0);
+            return ($result ? intval($result) : 0);
         }
     }
 
     public function reset(array $opts)
     {
-        $keyName = $this->options->keyName;
+        $keyName = $this->options["keyName"];
         $discriminator = $opts["discriminator"];
         $route = (isset($opts["route"]) ? $opts["route"] : "default");
-        if (isset($opts["type"])) {
+        if (!isset($opts["type"])) {
             try {
                 $result = $this->db->pipeline()
                     ->del("limitrr:${keyName}:${discriminator}:${route}:requests")
@@ -203,12 +204,13 @@ class Limitrr
             } catch (\Exception $e) {
                 $this->handleError($e);
             }
-            if ($result && $result[0] && $result[1]) {
+            if ($result) {
                 return true;
             } else {
                 throw new \Exception("Limitrr: Could not reset values", 1);
             }
         } else {
+            $type = $opts["type"];
             try {
                 $result = $this->db->del("limitrr:${keyName}:${discriminator}:${route}:${type}");
             } catch (\Exception $e) {
