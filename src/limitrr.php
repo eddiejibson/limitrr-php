@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 20th 2018, 5:11:20 pm
+ * @Last Modified Time: December 21st 2018, 2:26:04 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -120,25 +120,10 @@ class Limitrr
                         ->execute();
                     return $next($req, $res);
                 } catch (\Exception $e) {
-
+                    $this->handleError($e);
                 }
             }
         }
-    }
-
-    public function test()
-    {
-        try {
-            $resuelt = $this->db->set("limitrr:test", 1);
-            $resuelt = $this->db->expire("limitrr:test", 100);
-        } catch (\Exception $th) {
-            echo $th;
-        }
-
-        if ($resuelt) {
-            echo "Done!";
-        }
-        var_dump($resuelt);
     }
 
     public function complete(array $opts)
@@ -156,7 +141,7 @@ class Limitrr
             if ($result > $currentResult) {
                 return true;
             } else {
-                throw new \Exception("Limitrr: An error was encountered.", 1);
+                throw new \Exception("Limitrr: Could not complete values", 1);
             }
         } else {
             try {
@@ -170,7 +155,68 @@ class Limitrr
             if ($result[0] > 0 && $result[1]) {
                 return true;
             } else {
-                throw new \Exception("Limitrr: An error was encountered.", 1);
+                throw new \Exception("Limitrr: Could not complete values", 1);
+            }
+        }
+    }
+
+    public function get(array $opts)
+    {
+        $keyName = $this->options->keyName;
+        $discriminator = $opts["discriminator"];
+        $route = (isset($opts["route"]) ? $opts["route"] : "default");
+        if (!isset($opts["type"])) {
+            try {
+                $result = $this->db->pipeline()
+                    ->get("limitrr:${keyName}:${discriminator}:${route}:requests")
+                    ->get("limitrr:${keyName}:${discriminator}:${route}:completed")
+                    ->execute();
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            return [
+                "requests" => ($result[0] ? $result[0] : 0),
+                "completed" => ($result[1] ? $result[0] : 0),
+            ];
+        } else {
+            try {
+                $result = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:${type}");
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            return ($result ? $result : 0);
+        }
+    }
+
+    public function reset(array $opts)
+    {
+        $keyName = $this->options->keyName;
+        $discriminator = $opts["discriminator"];
+        $route = (isset($opts["route"]) ? $opts["route"] : "default");
+        if (isset($opts["type"])) {
+            try {
+                $result = $this->db->pipeline()
+                    ->del("limitrr:${keyName}:${discriminator}:${route}:requests")
+                    ->del("limitrr:${keyName}:${discriminator}:${route}:completed")
+                    ->execute();
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            if ($result && $result[0] && $result[1]) {
+                return true;
+            } else {
+                throw new \Exception("Limitrr: Could not reset values", 1);
+            }
+        } else {
+            try {
+                $result = $this->db->del("limitrr:${keyName}:${discriminator}:${route}:${type}");
+            } catch (\Exception $e) {
+                $this->handleError($e);
+            }
+            if ($result) {
+                return true;
+            } else {
+                throw new \Exception("Limitrr: Could not reset values", 1);
             }
         }
     }
@@ -178,13 +224,13 @@ class Limitrr
     private function handleError(\Exception $e)
     {
         $msg = $e->getMessage();
-        throw new \Exception("Limitrr: An error was encountered. ${msg}", 1);
+        throw new \Exception("Limitrr : An error was encountered . ${msg} ", 1);
     }
 
     private function setDefaultToUndefined(array $routes, array $default)
     {
         foreach ($routes as $key => $value) {
-            if ($key != "default") {
+            if ($key != " default ") {
                 foreach ($default as $defaultKey => $defaultValue) {
                     if (!isset($routes[$key][$defaultKey])) {
                         $routes[$key][$defaultKey] = $defaultValue;
@@ -206,7 +252,7 @@ class RateLimitMiddleware
         $this->opts = $opts;
         return true;
     }
-    // RequestInterface $req, ResponseInterface $res, callable $next
+    // RequestInterface  $req, ResponseInterface  $res, callable  $next
     public function __invoke($req, $res, $next)
     {
         return $this->limitrr->limit($this->opts, $req, $res, $next);
@@ -217,14 +263,14 @@ class GetIpMiddleware
 {
     public function __invoke($req, $res, $next)
     {
-        if ($req->hasHeader("CF-Connecting-IP")) {
-            $ip = $req->getHeader("CF-Connecting-IP");
-        } elseif ($req->hasHeader("X-Forwarded-For")) {
-            $ip = $req->getHeader("X-Forwarded-For");
+        if ($req->hasHeader("CF - Connecting - IP ")) {
+            $ip = $req->getHeader("CF - Connecting - IP ");
+        } elseif ($req->hasHeader("X - Forwarded - for ")) {
+            $ip = $req->getHeader("X - Forwarded - for ");
         } else {
             $ip = $req->getServerParam('REMOTE_ADDR');
         }
-        $req = $req->withAttribute("realip", $ip);
+        $req = $req->withAttribute("realip ", $ip);
         return $next($req, $res);
     }
 }
