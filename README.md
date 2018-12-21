@@ -26,7 +26,7 @@ If you appreciate this project, please 🌟 it on GitHub.
 You can install the limitrr-php libary via executing the following commandline in your terminal (assuming you have composer [installed](https://getcomposer.org/download/))
 
 ```bash
-composer require eddiejibson/limitrr-php
+composer require eddiejibson/limitrr-php "^1.0"
 ```
 
 ## Quick Guide
