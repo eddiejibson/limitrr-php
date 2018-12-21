@@ -3,13 +3,10 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 21st 2018, 7:26:05 pm
+ * @Last Modified Time: December 21st 2018, 7:27:47 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
-
-// use Psr\Http\Message\RequestInterface;
-// use Psr\Http\Message\ResponseInterface;
 
 class Limitrr
 {
