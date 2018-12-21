@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 21st 2018, 2:55:23 pm
+ * @Last Modified Time: December 21st 2018, 6:15:30 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -57,6 +57,7 @@ class Limitrr
             } else {
                 $conf = strval($conf["uri"]);
             }
+            $conf["database"] = (isset($conf["database"]) ? $conf["database"] : 0);
             $this->db = $client = new \Predis\Client($conf);
             $client->connect();
         } catch (\Predis\Connection\ConnectionException $e) {
@@ -128,7 +129,7 @@ class Limitrr
 
     public function complete(array $opts)
     {
-        $keyName = $this->options->keyName;
+        $keyName = $this->options["keyName"];
         $discriminator = $opts["discriminator"];
         $route = (isset($opts["route"]) ? $opts["route"] : "default");
         $currentResult = $this->db->get("limitrr:${keyName}:${discriminator}:${route}:completed");
@@ -139,7 +140,7 @@ class Limitrr
                 $this->handleError($e);
             }
             if ($result > $currentResult) {
-                return true;
+                return $result;
             } else {
                 throw new \Exception("Limitrr: Could not complete values", 1);
             }
@@ -153,7 +154,7 @@ class Limitrr
                 $this->handleError($e);
             }
             if ($result[0] > 0 && $result[1]) {
-                return true;
+                return $result[0];
             } else {
                 throw new \Exception("Limitrr: Could not complete values", 1);
             }
@@ -162,7 +163,7 @@ class Limitrr
 
     public function get(array $opts)
     {
-        $keyName = $this->options->keyName;
+        $keyName = $this->options["keyName"];
         $discriminator = $opts["discriminator"];
         $route = (isset($opts["route"]) ? $opts["route"] : "default");
         if (!isset($opts["type"])) {
@@ -206,6 +207,7 @@ class Limitrr
                 return true;
             } else {
                 throw new \Exception("Limitrr: Could not reset values", 1);
+                return false;
             }
         } else {
             try {
@@ -217,6 +219,7 @@ class Limitrr
                 return true;
             } else {
                 throw new \Exception("Limitrr: Could not reset values", 1);
+                return false;
             }
         }
     }
