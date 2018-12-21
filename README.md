@@ -60,8 +60,8 @@ $limitrr = new \eddiejibson\limitrr\Limitrr($options);
 $result = $limitrr->get(["discriminator" => $ip]);
 echo $result["requests"] + " Requests";
 echo $result["completed"] + " Completed";
-
-
+//Note that this library is no means just for SlimPHP, it just happens to
+//provide a middleware function for those who may need it.
 
 //Usage within SlimPHP
 $app = new Slim\App();
