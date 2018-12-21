@@ -1,6 +1,7 @@
 {
     "name": "eddiejibson/limitrr-php",
     "description": "Better PHP rate limiting using redis.",
+    "version": "1.0.0",
     "type": "library",
     "authors": [{
         "name": "Edward Jibson",
