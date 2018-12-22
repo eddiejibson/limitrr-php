@@ -110,7 +110,7 @@ $app->run();
 
 #### limitrr->get()
 
-**Returns:** Array or Integer
+**Returns:** Array
 
 ```php
 $limitrr->get([
@@ -160,7 +160,7 @@ echo $result["completed"] . " Completed Tasks made through the route exampleRout
 
 //You may also only fetch only one type of value - instead of both requests and completed.
 $result = $limitrr->get(["discriminator" => $ip, "route" => "exampleRouteName", "type" => "completed"]);
-echo "${result} Completed tasks made through the route exampleRouteName";
+echo $result["completed"] . " Completed tasks made through the route exampleRouteName";
 ```
 
 ### Complete action/task count
