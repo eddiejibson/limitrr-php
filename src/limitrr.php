@@ -75,7 +75,7 @@ class Limitrr
             $ip = $req->getServerParam('REMOTE_ADDR');
         }
         $keyName = $this->options["keyName"];
-        $key = "limitrr:${keyName}:${discriminator}:${route}";
+        $key = "limitrr:${keyName}:${ip}:${route}";
         $result = $this->db->pipeline()
             ->get("${key}:requests")
             ->get("${key}:completed")
