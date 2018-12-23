@@ -3,7 +3,7 @@
  * @Project: limitrr-php
  * @Created Date: Tuesday, December 11th 2018, 10:23:30 am
  * @Author: Edward Jibson
- * @Last Modified Time: December 22nd 2018, 11:46:41 pm
+ * @Last Modified Time: December 23rd 2018, 6:26:20 pm
  * @Last Modified By: Edward Jibson
  */
 namespace eddiejibson\limitrr;
@@ -36,7 +36,7 @@ class Limitrr
             ];
             $this->routes = $this->setDefaultToUndefined($conf["routes"], $conf["routes"]["default"]);
         }
-        $this->connect($conf["redis"]);
+        $this->db = $this->connect($conf["redis"]);
     }
 
     public function __destruct()
@@ -54,8 +54,9 @@ class Limitrr
                 $conf = (string)$conf["uri"];
             }
             $conf["database"] = $conf["database"] ?? 0;
-            $this->db = $client = new \Predis\Client($conf);
+            $client = new \Predis\Client($conf);
             $client->connect();
+            return $client;
         } catch (\Predis\Connection\ConnectionException $e) {
             $msg = $e->getMessage();
             throw new \Exception("Limitrr: Could not connect to the Redis keystore. ${msg}", 1);
