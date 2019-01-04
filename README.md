@@ -1,5 +1,5 @@
 <div align="center">
-<a href="https://github.com/eddiejibson/chae-limitrr"><img alt="chae" src="https://cdn.oxro.io/chae/img/limitrr-php.png" width="432.8" height="114.2"></a>
+<a href="https://github.com/eddiejibson/limitrr-php"><img alt="chae" src="https://cdn.oxro.io/chae/img/limitrr-php.png" width="432.8" height="114.2"></a>
 <br>
 <br>
 <!-- <img src="https://circleci.com/gh/eddiejibson/limitrr-php.svg?style=svg"></img> -->
