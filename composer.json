@@ -17,5 +17,5 @@
         "predis/predis": "^1.1",
         "php": "^7.0"
     },
-    "license": "GPL-3.0-only"
+    "license": "MIT"
 }
