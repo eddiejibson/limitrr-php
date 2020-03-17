@@ -70,15 +70,7 @@ class Limitrr
     public function limit(array $opts = [], $req, $res, $next)
     {
         $route = $opts["route"] ?? "default";
-        if ($req->hasHeader("CF-Connecting-IP")) {
-            $ip = $req->getHeader("CF-Connecting-IP");
-        } elseif ($req->hasHeader("X-Forwarded-For")) {
-            $ip = $req->getHeader("X-Forwarded-For");
-        } elseif ($route == "test") { //For unit testing
-            $ip = "test";
-        } else {
-            $ip = $req->getServerParam('REMOTE_ADDR');
-        }
+        $ip = self::getIp();
         $keyName = $this->options["keyName"];
         $key = "limitrr:${keyName}:${ip}:${route}";
         $result = $this->db->pipeline()
