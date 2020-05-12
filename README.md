@@ -22,6 +22,8 @@ If you appreciate this project, please 🌟 it on GitHub.
 **Pull Requests are welcomed**
 
 ## Installation
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Feddiejibson%2Flimitrr-php.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Feddiejibson%2Flimitrr-php?ref=badge_shield)
+
 
 You can install the limitrr-php libary via executing the following commandline in your terminal (assuming you have composer [installed](https://getcomposer.org/download/))
 
@@ -334,3 +336,7 @@ Inside the routes object, you can define many separate routes and set custom rul
     ]
 ]
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Feddiejibson%2Flimitrr-php.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Feddiejibson%2Flimitrr-php?ref=badge_large)
